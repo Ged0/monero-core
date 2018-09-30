@@ -17,7 +17,10 @@ message("CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 # add_subdirectory(test)
 
 set(SOURCE_FILES 
-    test/lmdb_test.c)
+    test/lmdb_test.c
+    src/blockchain_db/lmdb/db_lmdb.h
+    src/blockchain_db/lmdb/db_lmdb.c
+    )
 add_executable(${EXECUTABLE_NAME} ${SOURCE_FILES})
 
 if(LMDB_FOUND)

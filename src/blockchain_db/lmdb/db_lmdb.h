@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 #include "lmdb.h"
 #include "glib.h"
 
@@ -68,49 +69,62 @@ typedef struct mdb_threadinfo
   mdb_txn_cursors m_ti_rcursors;	// per-thread read cursors
   mdb_rflags m_ti_rflags;	// per-thread read state
 
-  ~mdb_threadinfo();
+  // ~mdb_threadinfo();
 } mdb_threadinfo;
 
 
-struct mdb_txn_safe
+typedef struct mdb_txn_safe
 {
-  mdb_txn_safe(const bool check=true);
-  ~mdb_txn_safe();
+  // mdb_txn_safe(const bool check=true);
+  // ~mdb_txn_safe();
 
-  void commit(char* message = "");
+  // void commit(char* message = "");
 
-  // This should only be needed for batch transaction which must be ensured to
-  // be aborted before mdb_env_close, not after. So we can't rely on
-  // BlockchainLMDB destructor to call mdb_txn_safe destructor, as that's too late
-  // to properly abort, since mdb_env_close would have been called earlier.
-  void abort();
-  void uncheck();
+  // // This should only be needed for batch transaction which must be ensured to
+  // // be aborted before mdb_env_close, not after. So we can't rely on
+  // // BlockchainLMDB destructor to call mdb_txn_safe destructor, as that's too late
+  // // to properly abort, since mdb_env_close would have been called earlier.
+  // void abort();
+  // void uncheck();
 
-  operator MDB_txn*()
-  {
-    return m_txn;
-  }
+  // operator MDB_txn*()
+  // {
+  //   return m_txn;
+  // }
 
-  operator MDB_txn**()
-  {
-    return &m_txn;
-  }
+  // operator MDB_txn**()
+  // {
+  //   return &m_txn;
+  // }
 
-  uint64_t num_active_tx() const;
+  // uint64_t num_active_tx() const;
 
-  static void prevent_new_txns();
-  static void wait_no_active_txns();
-  static void allow_new_txns();
+  // static void prevent_new_txns();
+  // static void wait_no_active_txns();
+  // static void allow_new_txns();
 
   mdb_threadinfo* m_tinfo;
   MDB_txn* m_txn;
-  bool m_batch_txn = false;
+  bool m_batch_txn;
   bool m_check;
-  static sig_atomic_t num_active_txns;
-  // static std::atomic<uint64_t> num_active_txns;
+} mdb_txn_safe;
 
-  // could use a mutex here, but this should be sufficient.
-  static sig_atomic_t creation_gate;
-  // static std::atomic_flag creation_gate;
-};
+void mdb_txn_safe_commit(mdb_txn_safe* txn, const char* message);
+void mdb_txn_safe_abort(mdb_txn_safe* txn);
+void mdb_txn_safe_uncheck(mdb_txn_safe* txn);
+uint64_t mdb_txn_safe_num_active_tx();
 
+static void mdb_txn_safe_prevent_new_txns();
+static void mdb_txn_safe_wait_no_active_txns();
+static void mdb_txn_safe_allow_new_txns();
+
+static sig_atomic_t mdb_txn_safe_num_active_txns;
+// static std::atomic<uint64_t> num_active_txns;
+
+// could use a mutex here, but this should be sufficient.
+static sig_atomic_t mdb_txn_safe_creation_gate;
+// static std::atomic_flag creation_gate;
+
+
+
+void lmdb_open(const char* filename, const int mdb_flags);

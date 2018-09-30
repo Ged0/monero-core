@@ -15,9 +15,11 @@ message("glib libraries: ${GLIB_LDFLAGS}")
 message("CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 # add_subdirectory(src)
 # add_subdirectory(test)
-
+include_directories(src)
+# include_directories(src/blockchain_db)
 set(SOURCE_FILES 
     test/lmdb_test.c
+    src/blockchain_db/blockchain_db.h
     src/blockchain_db/lmdb/db_lmdb.h
     src/blockchain_db/lmdb/db_lmdb.c
     )
@@ -26,9 +28,9 @@ add_executable(${EXECUTABLE_NAME} ${SOURCE_FILES})
 if(LMDB_FOUND)
     message("lmdb include: ${LMDB_INCLUDE_DIR}")
     message("lmdb libraries: ${LMDB_LIBRARIES}")
-    INCLUDE_DIRECTORIES(${LMDB_INCLUDE_DIR})
+    include_directories(${LMDB_INCLUDE_DIR})
     target_link_libraries(${EXECUTABLE_NAME} ${LMDB_LIBRARIES})
 endif(LMDB_FOUND)
 
-INCLUDE_DIRECTORIES(${GLIB_INCLUDE_DIRS})
+include_directories(${GLIB_INCLUDE_DIRS})
 target_link_libraries(${EXECUTABLE_NAME} ${GLIB_LDFLAGS})

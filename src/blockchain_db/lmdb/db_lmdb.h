@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include "lmdb.h"
 #include "glib.h"
+#include "blockchain_db/blockchain_db.h"
 
 typedef struct mdb_txn_cursors
 {
@@ -80,10 +81,7 @@ typedef struct mdb_txn_safe
 
   // void commit(char* message = "");
 
-  // // This should only be needed for batch transaction which must be ensured to
-  // // be aborted before mdb_env_close, not after. So we can't rely on
-  // // BlockchainLMDB destructor to call mdb_txn_safe destructor, as that's too late
-  // // to properly abort, since mdb_env_close would have been called earlier.
+
   // void abort();
   // void uncheck();
 
@@ -110,6 +108,10 @@ typedef struct mdb_txn_safe
 } mdb_txn_safe;
 
 void mdb_txn_safe_commit(mdb_txn_safe* txn, const char* message);
+// This should only be needed for batch transaction which must be ensured to
+// be aborted before mdb_env_close, not after. So we can't rely on
+// BlockchainLMDB destructor to call mdb_txn_safe destructor, as that's too late
+// to properly abort, since mdb_env_close would have been called earlier.
 void mdb_txn_safe_abort(mdb_txn_safe* txn);
 void mdb_txn_safe_uncheck(mdb_txn_safe* txn);
 uint64_t mdb_txn_safe_num_active_tx();
@@ -125,6 +127,52 @@ static sig_atomic_t mdb_txn_safe_num_active_txns;
 static sig_atomic_t mdb_txn_safe_creation_gate;
 // static std::atomic_flag creation_gate;
 
+typedef struct BlockchainLMDB {
+  BlockchainDB* db;
+  MDB_env* m_env;
+
+  MDB_dbi m_blocks;
+  MDB_dbi m_block_heights;
+  MDB_dbi m_block_info;
+
+  MDB_dbi m_txs;
+  MDB_dbi m_txs_pruned;
+  MDB_dbi m_txs_prunable;
+  MDB_dbi m_txs_prunable_hash;
+  MDB_dbi m_tx_indices;
+  MDB_dbi m_tx_outputs;
+
+  MDB_dbi m_output_txs;
+  MDB_dbi m_output_amounts;
+
+  MDB_dbi m_spent_keys;
+
+  MDB_dbi m_txpool_meta;
+  MDB_dbi m_txpool_blob;
+
+  MDB_dbi m_hf_starting_heights;
+  MDB_dbi m_hf_versions;
+
+  MDB_dbi m_properties;
+  //mutable uint64_t m_cum_size;
+  uint64_t m_cum_size;	// used in batch size estimation
+  //mutable unsigned int m_cum_count;
+  unsigned int m_cum_count;
+  char* m_folder;
+  mdb_txn_safe* m_write_txn; // may point to either a short-lived txn or a batch txn
+  mdb_txn_safe* m_write_batch_txn; // persist batch txn outside of BlockchainLMDB
+  // boost::thread::id m_writer;
+  uint64_t m_writer;
+
+  bool m_batch_transactions; // support for batch transactions
+  bool m_batch_active; // whether batch transaction is in progress
+
+  mdb_txn_cursors m_wcursors;
+  // mutable boost::thread_specific_ptr<mdb_threadinfo> m_tinfo;
+  //TODO thread safe
+  mdb_threadinfo* m_tinfo;
+
+} BlockchainLMDB;
 
 
-void lmdb_open(const char* filename, const int mdb_flags);
+void lmdb_open(BlockchainLMDB *lmdb,const char* filename, const int db_flags);

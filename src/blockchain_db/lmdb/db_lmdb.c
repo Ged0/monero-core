@@ -13,4 +13,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
         return;
     }
     
+    //TODO check if data exists
+    
+    
 }

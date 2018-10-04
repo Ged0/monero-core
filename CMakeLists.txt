@@ -19,6 +19,7 @@ include_directories(src)
 # include_directories(src/blockchain_db)
 set(SOURCE_FILES 
     test/lmdb_test.c
+    src/common/file_util.h
     src/blockchain_db/blockchain_db.h
     src/blockchain_db/lmdb/db_lmdb.h
     src/blockchain_db/lmdb/db_lmdb.c

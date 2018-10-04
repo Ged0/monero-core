@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "lmdb.h"
 #include "glib.h"
 
@@ -44,10 +45,22 @@ leave:
     mdb_env_close(env);
 }
 
+void test_str() {
+    char* src = "12345";
+    int len = strlen(src);
+    printf("%d\n", len);
+    
+    char dest[3];
+    strncpy(dest, src, 3);
+    printf("%d\n", strlen(dest));
+    printf("%s\n", dest);
+}
+
 
 int main(int argc,char * argv[])
 {
-    test_lmdb();
+//    test_lmdb();
+    test_str();
     return 0;
 }
 

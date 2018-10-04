@@ -28,21 +28,22 @@
 #
 # Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-if (WIN32 OR STATIC)
-  add_definitions(-DSTATICLIB)
-  # miniupnp changed their static define
-  add_definitions(-DMINIUPNP_STATICLIB)
-endif ()
+# if (WIN32 OR STATIC)
+#   add_definitions(-DSTATICLIB)
+#   # miniupnp changed their static define
+#   add_definitions(-DMINIUPNP_STATICLIB)
+# endif ()
 
-# warnings are cleared only for GCC on Linux
-if (NOT (MINGW OR APPLE OR FREEBSD OR OPENBSD OR DRAGONFLY))
-  add_compile_options("${WARNINGS_AS_ERRORS_FLAG}") # applies only to targets that follow
-endif()
+# # warnings are cleared only for GCC on Linux
+# if (NOT (MINGW OR APPLE OR FREEBSD OR OPENBSD OR DRAGONFLY))
+#   add_compile_options("${WARNINGS_AS_ERRORS_FLAG}") # applies only to targets that follow
+# endif()
 
 function (monero_private_headers group)
   source_group("${group}\\Private"
     FILES
       ${ARGN})
+  message("group: ${group}")
 endfunction ()
 
 function (monero_install_headers subdir)
@@ -84,6 +85,7 @@ endfunction ()
 
 function (monero_add_library name)
     monero_add_library_with_deps(NAME "${name}" SOURCES ${ARGN})
+    message("name: ${name}, SOURCES: ${ARGN}")
 endfunction()
 
 function (monero_add_library_with_deps)
@@ -105,12 +107,14 @@ function (monero_add_library_with_deps)
     PRIVATE $<TARGET_PROPERTY:${MONERO_ADD_LIBRARY_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 endfunction ()
 
-include(Version)
-monero_add_library(version SOURCES ${CMAKE_BINARY_DIR}/version.cpp DEPENDS genversion)
+# todo genversion
+# include(Version)
+# monero_add_library(version SOURCES ${CMAKE_BINARY_DIR}/version.cpp DEPENDS genversion)
 
 add_subdirectory(common)
-add_subdirectory(cryptonote_basic)
+# add_subdirectory(cryptonote_basic)
 add_subdirectory(blockchain_db)
+add_subdirectory(test)
 # add_subdirectory(crypto)
 # add_subdirectory(ringct)
 # add_subdirectory(checkpoints)

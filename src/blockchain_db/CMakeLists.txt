@@ -29,3 +29,10 @@ monero_add_library(blockchain_db
   ${blockchain_db_sources}
   ${blockchain_db_headers}
   ${blockchain_db_private_headers})
+
+target_link_libraries(blockchain_db
+	PUBLIC
+	common
+	${LMDB_LIBRARIES}
+	)
+

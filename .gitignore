@@ -52,5 +52,6 @@ Mkfile.old
 dkms.conf
 
 build/*
+build-make/*
 .vscode/*
 **/.DS_Store

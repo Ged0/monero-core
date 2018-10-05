@@ -3,6 +3,7 @@
 #include <lmdb.h>
 #include "glib.h"
 #include "blockchain_db/blockchain_db.h"
+#include "cryptonote_config.h"
 
 typedef struct mdb_txn_cursors
 {

@@ -90,9 +90,12 @@ include_directories(${LMDB_INCLUDE_DIR})
 include_directories(${GLIB_INCLUDE_DIRS})
 message("LMDB_INCLUDE: ${LMDB_INCLUDE_DIR}")
 message("GLIB_INCLUDE_DIRS: ${GLIB_INCLUDE_DIRS}")
-include_directories(src)
-# add_subdirectory(src)
 
+# find_package(ZLOG REQUIRED)
+# message("ZLOG_INCLUDE: ${ZLOG_INCLUDE}")
+# message("ZLOG_LIBRARIES: ${ZLOG_LIBRARIES}")
+
+include_directories(src)
 add_subdirectory(src)
 
 

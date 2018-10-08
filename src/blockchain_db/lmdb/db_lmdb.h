@@ -177,3 +177,10 @@ typedef struct BlockchainLMDB {
 
 
 void lmdb_open(BlockchainLMDB *lmdb,const char* filename, const int db_flags);
+
+
+#if defined(ENABLE_AUTO_RESIZE)
+static uint64_t DEFAULT_MAPSIZE = 1LL << 30;
+#else
+static uint64_t DEFAULT_MAPSIZE = 1LL << 33;
+#endif

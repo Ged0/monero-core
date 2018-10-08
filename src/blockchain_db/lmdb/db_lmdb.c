@@ -60,5 +60,21 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
         return;
     }
     
+    //TODO need to calculate from core of CPU
+    int threads = 20;
+    
+    size_t mapsize = DEFAULT_MAPSIZE;
+    
+    if (db_flags & DBF_FAST)
+        mdb_flags |= MDB_NOSYNC;
+    if (db_flags & DBF_FASTEST)
+        mdb_flags |= MDB_NOSYNC | MDB_WRITEMAP | MDB_MAPASYNC;
+    if (db_flags & DBF_RDONLY)
+        mdb_flags = MDB_RDONLY;
+    if (db_flags & DBF_SALVAGE)
+        mdb_flags |= MDB_PREVSNAPSHOT;
+    
+    
+    
     
 }

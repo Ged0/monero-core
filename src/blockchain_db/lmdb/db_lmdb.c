@@ -50,12 +50,12 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
 //            MCLOG_RED(el::Level::Warning, "global", "The blockchain is on a rotating drive: this will be very slow, use a SSD if possible");
 //    }
     
-    if(result = mdb_env_create(&lmdb->m_env)) {
+    if((result = mdb_env_create(&(lmdb->m_env)))) {
         printf("Failed to create lmdb environment: %d", result);
         return;
     }
     
-    if (result = mdb_env_set_maxdbs(&lmdb->m_env, 20)) {
+    if ((result = mdb_env_set_maxdbs(lmdb->m_env, 20))) {
         printf("Failed to set max number of dbs: %d", result);
         return;
     }
@@ -74,7 +74,23 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     if (db_flags & DBF_SALVAGE)
         mdb_flags |= MDB_PREVSNAPSHOT;
     
+    if ((result = mdb_env_open(lmdb->m_env, filename, mdb_flags, 0644))) {
+        printf("Failed to open lmdb environment: %d", result);
+    }
     
+    MDB_envinfo mei;
+    mdb_env_info(lmdb->m_env, &mei);
+    uint64_t cur_mapsize = (double)mei.me_mapsize;
+    
+    if (cur_mapsize < mapsize)
+    {
+        if ((result = mdb_env_set_mapsize(lmdb->m_env, mapsize))) {
+            printf("Failed to set max memory map size: %d", result);
+        }
+        mdb_env_info(lmdb->m_env, &mei);
+        cur_mapsize = (double)mei.me_mapsize;
+        printf("LMDB memory map size: %llu", cur_mapsize);
+    }
     
     
 }

@@ -15,11 +15,13 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
         return;
     }
     
-    //TODO check if data exists
     struct stat sb;
     if (stat(filename, &sb) != 0) {
         //TODO  if mkdir failed, return.
-        int mkdirResult = mkdir(filename, 0777);
+        if ((result = mkdir(filename, 0777))) {
+            printf("Create file failed, filename: %s, result: %d", filename, result);
+            return;
+        }
     }
     if (!S_ISDIR(sb.st_mode)) {
         printf("LMDB needs a directory path, but a file was passed");
@@ -62,6 +64,11 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     
     //TODO need to calculate from core of CPU
     int threads = 20;
+    if (threads > 110
+        && (result = mdb_env_set_maxreaders(lmdb->m_env, threads + 16))) {
+        printf("Failed to set max number of readers: %d", result);
+        return;
+    }
     
     size_t mapsize = DEFAULT_MAPSIZE;
     
@@ -82,8 +89,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     mdb_env_info(lmdb->m_env, &mei);
     uint64_t cur_mapsize = (double)mei.me_mapsize;
     
-    if (cur_mapsize < mapsize)
-    {
+    if (cur_mapsize < mapsize) {
         if ((result = mdb_env_set_mapsize(lmdb->m_env, mapsize))) {
             printf("Failed to set max memory map size: %d", result);
         }

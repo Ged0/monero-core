@@ -11,7 +11,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
 
     if (lmdb != NULL && lmdb->db->m_open) {
         /* code */
-        printf("Attempted to open db, but it's already open");
+        g_error("Attempted to open db, but it's already open");
         return;
     }
     
@@ -19,12 +19,12 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     if (stat(filename, &sb) != 0) {
         //TODO  if mkdir failed, return.
         if ((result = mkdir(filename, 0777))) {
-            printf("Create file failed, filename: %s, result: %d", filename, result);
+            g_error("Create file failed, filename: %s, result: %d", filename, result);
             return;
         }
     }
     if (!S_ISDIR(sb.st_mode)) {
-        printf("LMDB needs a directory path, but a file was passed");
+        g_error("LMDB needs a directory path, but a file was passed");
         return;
     }
     
@@ -39,8 +39,8 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     strcpy(block_lock_file_path, oldFiles);
     strcpy(block_lock_file_path, CRYPTONOTE_BLOCKCHAINDATA_LOCK_FILENAME);
     if (is_file_exists(block_data_file_path) || is_file_exists(block_lock_file_path)) {
-        printf("Found existing LMDB files in %s", oldFiles);
-        printf("Move %s and/or %s to %s, or delete them, and then restart", block_data_file_path, block_lock_file_path, oldFiles);
+        g_error("Found existing LMDB files in %s", oldFiles);
+        g_error("Move %s and/or %s to %s, or delete them, and then restart", block_data_file_path, block_lock_file_path, oldFiles);
         return;
     }
     
@@ -53,12 +53,12 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
 //    }
     
     if((result = mdb_env_create(&(lmdb->m_env)))) {
-        printf("Failed to create lmdb environment: %d", result);
+        g_error("Failed to create lmdb environment: %d", result);
         return;
     }
     
     if ((result = mdb_env_set_maxdbs(lmdb->m_env, 20))) {
-        printf("Failed to set max number of dbs: %d", result);
+        g_error("Failed to set max number of dbs: %d", result);
         return;
     }
     
@@ -66,7 +66,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     int threads = 20;
     if (threads > 110
         && (result = mdb_env_set_maxreaders(lmdb->m_env, threads + 16))) {
-        printf("Failed to set max number of readers: %d", result);
+        g_error("Failed to set max number of readers: %d", result);
         return;
     }
     
@@ -82,7 +82,8 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
         mdb_flags |= MDB_PREVSNAPSHOT;
     
     if ((result = mdb_env_open(lmdb->m_env, filename, mdb_flags, 0644))) {
-        printf("Failed to open lmdb environment: %d", result);
+        g_error("Failed to open lmdb environment: %d", result);
+        return;
     }
     
     MDB_envinfo mei;
@@ -92,11 +93,11 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     if (cur_mapsize < mapsize) {
         if ((result = mdb_env_set_mapsize(lmdb->m_env, mapsize))) {
             printf("Failed to set max memory map size: %d", result);
+            return;
         }
         mdb_env_info(lmdb->m_env, &mei);
         cur_mapsize = (double)mei.me_mapsize;
-        printf("LMDB memory map size: %llu", cur_mapsize);
+        g_info("LMDB memory map size: %llu", cur_mapsize);
     }
-    
     
 }

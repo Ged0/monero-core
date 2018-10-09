@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <lmdb.h>
-#include "glib.h"
+#include <glib.h>
 #include "blockchain_db/blockchain_db.h"
 #include "cryptonote_config.h"
 

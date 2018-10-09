@@ -5,6 +5,9 @@
 #include "blockchain_db/blockchain_db.h"
 #include "cryptonote_config.h"
 
+
+#define ENABLE_AUTO_RESIZE
+
 typedef struct mdb_txn_cursors
 {
   MDB_cursor *m_txc_blocks;
@@ -176,7 +179,12 @@ typedef struct BlockchainLMDB {
 } BlockchainLMDB;
 
 
-void lmdb_open(BlockchainLMDB *lmdb,const char* filename, const int db_flags);
+void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags);
+
+// threshold_size is used for batch transactions
+bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size);
+
+void lmdb_do_resize(BlockchainLMDB *lmdb);
 
 
 #if defined(ENABLE_AUTO_RESIZE)
@@ -184,3 +192,5 @@ static uint64_t DEFAULT_MAPSIZE = 1LL << 30;
 #else
 static uint64_t DEFAULT_MAPSIZE = 1LL << 33;
 #endif
+
+static float RESIZE_PERCENT = 0.9f;

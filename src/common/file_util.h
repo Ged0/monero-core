@@ -1,3 +1,6 @@
+#ifndef MONERO_COMMON_FILE_UTIL_H_
+#define MONERO_COMMON_FILE_UTIL_H_
+
 #include <sys/stat.h>
 #include <stdbool.h>
 
@@ -24,3 +27,4 @@ bool is_file_exists(char* filename) {
     return true;
 }
 
+#endif //MONERO_COMMON_FILE_UTIL_H_

@@ -1,3 +1,6 @@
+#ifndef MONERO_BLOCKCHAIN_DB_LMDB_H_
+#define MONERO_BLOCKCHAIN_DB_LMDB_H_
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <lmdb.h>
@@ -194,3 +197,6 @@ static uint64_t DEFAULT_MAPSIZE = 1LL << 33;
 #endif
 
 static float RESIZE_PERCENT = 0.9f;
+
+
+#endif //MONERO_BLOCKCHAIN_DB_LMDB_H_

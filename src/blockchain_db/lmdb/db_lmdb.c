@@ -30,6 +30,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
         return;
     }
     
+    //FIXME
     int index = strrchr(filename, '/');
     char oldFiles[index+1];
     strncpy(oldFiles, filename, index+1);
@@ -53,7 +54,9 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
 //        if (is_hdd_result.value())
 //            MCLOG_RED(el::Level::Warning, "global", "The blockchain is on a rotating drive: this will be very slow, use a SSD if possible");
 //    }
-    lmdb->m_folder = filename;
+
+    lmdb->m_folder = malloc(strlen(filename) + 1);
+    strncpy(lmdb->m_folder, filename, strlen(filename));
     
     if((result = mdb_env_create(&(lmdb->m_env)))) {
         g_error("Failed to create lmdb environment: %d", result);
@@ -154,5 +157,8 @@ bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size) {
 }
 
 void lmdb_do_resize(BlockchainLMDB *lmdb) {
+    g_debug("BlockchainLMDB#lmdb_do_resize");
+    const uint64_t add_size = 1LL << 30;
+    // check disk capacity
     
 }

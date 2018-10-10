@@ -115,3 +115,5 @@ include_directories(${LMDB_INCLUDE})
 
 include_directories(src)
 add_subdirectory(src)
+
+add_subdirectory(test)

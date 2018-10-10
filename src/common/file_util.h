@@ -2,6 +2,7 @@
 #define MONERO_COMMON_FILE_UTIL_H_
 
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <stdbool.h>
 
 
@@ -25,6 +26,18 @@ bool is_file_exists(char* filename) {
         return false;
     }
     return true;
+}
+
+long get_available_space(const char* path) {
+    struct statvfs stat;
+    
+    if (statvfs(path, &stat) != 0) {
+        // error happens, just quits here
+        return -1;
+    }
+    
+    // the available size is f_bsize * f_bavail
+    return stat.f_bsize * stat.f_bavail;
 }
 
 #endif //MONERO_COMMON_FILE_UTIL_H_

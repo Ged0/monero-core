@@ -1,9 +1,15 @@
+#ifndef MONERO_BLOCKCHAIN_DB_LMDB_H_
+#define MONERO_BLOCKCHAIN_DB_LMDB_H_
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <lmdb.h>
 #include <glib.h>
 #include "blockchain_db/blockchain_db.h"
 #include "cryptonote_config.h"
+
+
+#define ENABLE_AUTO_RESIZE
 
 typedef struct mdb_txn_cursors
 {
@@ -176,7 +182,12 @@ typedef struct BlockchainLMDB {
 } BlockchainLMDB;
 
 
-void lmdb_open(BlockchainLMDB *lmdb,const char* filename, const int db_flags);
+void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags);
+
+// threshold_size is used for batch transactions
+bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size);
+
+void lmdb_do_resize(BlockchainLMDB *lmdb);
 
 
 #if defined(ENABLE_AUTO_RESIZE)
@@ -184,3 +195,8 @@ static uint64_t DEFAULT_MAPSIZE = 1LL << 30;
 #else
 static uint64_t DEFAULT_MAPSIZE = 1LL << 33;
 #endif
+
+static float RESIZE_PERCENT = 0.9f;
+
+
+#endif //MONERO_BLOCKCHAIN_DB_LMDB_H_

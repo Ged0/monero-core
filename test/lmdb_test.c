@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/statvfs.h>
 #include "lmdb.h"
 #include "glib.h"
 
@@ -52,15 +53,28 @@ void test_str() {
     
     char dest[3];
     strncpy(dest, src, 3);
-    printf("%d\n", strlen(dest));
+    printf("%lu\n", strlen(dest));
     printf("%s\n", dest);
+}
+
+long GetAvailableSpace(const char* path)
+{
+    struct statvfs stat;
+    
+    if (statvfs(path, &stat) != 0) {
+        // error happens, just quits here
+        return -1;
+    }
+    
+    // the available size is f_bsize * f_bavail
+    return stat.f_bsize * stat.f_bavail;
 }
 
 
 int main(int argc,char * argv[])
 {
-//    test_lmdb();
-    test_str();
+    // test_lmdb();
+   printf("spacesize: %ld", GetAvailableSpace("/Users/line/workspace/cryptocurrency/monero"));
     return 0;
 }
 

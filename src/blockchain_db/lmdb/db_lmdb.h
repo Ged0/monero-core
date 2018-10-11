@@ -107,9 +107,8 @@ typedef struct mdb_txn_safe
   // static void prevent_new_txns();
   // static void wait_no_active_txns();
   // static void allow_new_txns();
-
-  mdb_threadinfo* m_tinfo;
   MDB_txn* m_txn;
+  mdb_threadinfo* m_tinfo;
   bool m_batch_txn;
   bool m_check;
 } mdb_txn_safe;

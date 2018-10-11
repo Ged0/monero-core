@@ -202,7 +202,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     
     // open necessary databases, and set properties as needed
     // uses macros to avoid having to change things too many places
-    lmdb_db_open(txn, LMDB_BLOCKS, MDB_INTEGERKEY | MDB_CREATE, &lmdb->m_blocks, "Failed to open db handle for m_blocks");
+    lmdb_db_open(txn, LMDB_BLOCKS, MDB_INTEGERKEY | MDB_CREATE, lmdb->m_blocks, "Failed to open db handle for m_blocks");
 
 }
 

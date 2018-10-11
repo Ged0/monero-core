@@ -137,7 +137,7 @@ typedef struct BlockchainLMDB {
   BlockchainDB* db;
   MDB_env* m_env;
 
-  MDB_dbi m_blocks;
+  MDB_dbi* m_blocks;
   MDB_dbi m_block_heights;
   MDB_dbi m_block_info;
 

@@ -102,7 +102,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     }
     
     if (lmdb_need_resize(lmdb, 0)) {
-        lmdb_do_resize(lmdb);
+        lmdb_do_resize(lmdb, 0);
     }
 }
 
@@ -154,7 +154,8 @@ void lmdb_do_resize(BlockchainLMDB *lmdb, uint64_t increase_size) {
     // check disk capacity
     long available_space = get_available_space(lmdb->m_folder);
     if (available_space < add_size) {
-        g_warning("!! WARNING: Insufficient free space to extend database !!: %d MB avaliable, %d MB needed", available_space >> 20L, add_size >> 20L);
+        g_error("!! WARNING: Insufficient free space to extend database !!: %ld MB avaliable, %llu MB needed", available_space >> 20L, add_size >> 20L);
+        return;
     }
     
     MDB_envinfo mei;

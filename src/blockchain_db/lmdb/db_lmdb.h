@@ -187,7 +187,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags);
 // threshold_size is used for batch transactions
 bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size);
 
-void lmdb_do_resize(BlockchainLMDB *lmdb);
+void lmdb_do_resize(BlockchainLMDB *lmdb, uint64_t increase_size);
 
 
 #if defined(ENABLE_AUTO_RESIZE)

@@ -132,7 +132,7 @@ static sig_atomic_t mdb_txn_safe_num_active_txns;
 // could use a mutex here, but this should be sufficient.
 static sig_atomic_t mdb_txn_safe_creation_gate;
 // static std::atomic_flag creation_gate;
-
+//TODO refactor all data to pointer
 typedef struct BlockchainLMDB {
   BlockchainDB* db;
   MDB_env* m_env;

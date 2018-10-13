@@ -188,6 +188,15 @@ bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size);
 
 void lmdb_do_resize(BlockchainLMDB *lmdb, uint64_t increase_size);
 
+void lmdb_migrate(BlockchainLMDB *lmdb, const uint32_t oldversion);
+
+// migrate from DB version 0 to 1
+//void lmdb_migrate_0_1();
+// migrate from DB version 1 to 2
+//void lmdb_migrate_1_2();
+// migrate from DB version 2 to 3
+//void lmdb_migrate_2_3();
+
 
 #if defined(ENABLE_AUTO_RESIZE)
 static uint64_t DEFAULT_MAPSIZE = 1LL << 30;

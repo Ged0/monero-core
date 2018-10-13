@@ -4,6 +4,23 @@
 #include "common/file_util.h"
 #include "db_lmdb.h"
 
+// Increase when the DB structure changes
+#define VERSION 3
+
+MDB_val* mdb_val_from_char_array(char* val) {
+    MDB_val *mdb_val = malloc(sizeof(MDB_val));
+    mdb_val->mv_size = sizeof(strlen(val) + 1);
+    mdb_val->mv_data = val;
+    return mdb_val;
+}
+
+MDB_val* mdb_val_from_uint32_t(uint32_t val) {
+    MDB_val *mdb_val = malloc(sizeof(MDB_val));
+    mdb_val->mv_size = sizeof(uint32_t);
+    mdb_val->mv_data = &val;
+    return mdb_val;
+}
+
 int compare_uint64(const MDB_val *a, const MDB_val *b) {
     const uint64_t va = *(const uint64_t *)a->mv_data;
     const uint64_t vb = *(const uint64_t *)b->mv_data;
@@ -28,6 +45,25 @@ int compare_string(const MDB_val *a, const MDB_val *b) {
     return strcmp(va, vb);
 }
 
+void mdb_txn_safe_commit(mdb_txn_safe* txn, const char* message) {
+    if (message == NULL || strlen(message) == 0) {
+        message = "Failed to commit a transaction to the db";
+    }
+    int result = mdb_txn_commit(txn->m_txn);
+    txn->m_txn = NULL;
+    if (result) {
+        g_error("%s: %d", message, result);
+    }
+}
+void mdb_txn_safe_abort(mdb_txn_safe* txn) {
+    g_debug("mdb_txn_safe: abort()");
+    if (txn != NULL && txn->m_txn != NULL) {
+        mdb_txn_abort(txn->m_txn);
+        txn->m_txn = NULL;
+    } else {
+        g_warning("WARNING: mdb_txn_safe: abort() called, but m_txn is NULL");
+    }
+}
 static void mdb_txn_safe_prevent_new_txns() {
     //TODO
 }
@@ -285,7 +321,63 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     
     bool compatible = true;
     
+    MDB_val* k = mdb_val_from_char_array("version");
+    MDB_val v;
+    int get_result = mdb_get(txn, *lmdb->m_properties, k, &v);
+    if (get_result == MDB_SUCCESS) {
+        const uint32_t db_version = *(const uint32_t*)v.mv_data;
+        if (db_version > VERSION) {
+            g_warning("Existing lmdb database was made by a later version (%d). We don't know how it will change yet.", db_version);
+            compatible = false;
+        }
+#if VERSION > 0
+        else if (db_version < VERSION) {
+            // Note that there was a schema change within version 0 as well.
+            // See commit e5d2680094ee15889934fe28901e4e133cda56f2 2015/07/10
+            // We don't handle the old format previous to that commit.
+            mdb_txn_safe_commit(&txn_safe, NULL);
+            lmdb->db->m_open = true;
+            lmdb_migrate(lmdb, 0);
+            return;
+        }
+#endif
+    } else {
+        // if not found, and the DB is non-empty, this is probably
+        // an "old" version 0, which we don't handle. If the DB is
+        // empty it's fine.
+        if (VERSION > 0 && m_height > 0)
+            compatible = false;
+    }
     
+    if (!compatible) {
+        mdb_txn_safe_abort(&txn_safe);
+        mdb_env_close(lmdb->m_env);
+        lmdb->db->m_open = false;
+        g_error("Existing lmdb database is incompatible with this version.\nPlease delete the existing database and resync.");
+        return;
+    }
+    
+    if (!(mdb_flags & MDB_RDONLY)) {
+        // only write version on an empty DB
+        if (m_height == 0) {
+            MDB_val* k = mdb_val_from_char_array("version");
+            MDB_val* v = mdb_val_from_uint32_t(VERSION);
+            int put_result = mdb_put(txn, *lmdb->m_properties, k, v, 0);
+            if (put_result != MDB_SUCCESS) {
+                mdb_txn_safe_abort(&txn_safe);
+                mdb_env_close(lmdb->m_env);
+                lmdb->db->m_open = false;
+                g_info("Failed to write version to database.");
+                return;
+            }
+        }
+    }
+    
+    // commit the transaction
+    mdb_txn_safe_commit(&txn_safe, NULL);
+    
+    lmdb->db->m_open = true;
+    // from here, init should be finished
 }
 
 bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size) {
@@ -383,4 +475,8 @@ void lmdb_do_resize(BlockchainLMDB *lmdb, uint64_t increase_size) {
     
     mdb_txn_safe_allow_new_txns();
     
+}
+
+void lmdb_migrate(BlockchainLMDB *lmdb, const uint32_t oldversion) {
+    g_error("not support migrate now!");
 }

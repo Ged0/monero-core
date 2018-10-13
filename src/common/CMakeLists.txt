@@ -5,7 +5,8 @@ set(common_private_headers
 	aligned.h)
 
 set(common_sources
-	aligned.c)
+	aligned.c
+	file_util.c)
 
 monero_private_headers(common
   ${common_private_headers})

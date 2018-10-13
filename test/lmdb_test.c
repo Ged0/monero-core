@@ -3,6 +3,8 @@
 #include <sys/statvfs.h>
 #include "lmdb.h"
 #include "glib.h"
+#include "common/file_util.h"
+#include "blockchain_db/lmdb/db_lmdb.h"
 
 void test_lmdb() {
     int rc;
@@ -70,11 +72,25 @@ long GetAvailableSpace(const char* path)
     return stat.f_bsize * stat.f_bavail;
 }
 
+void lmdb_open_test() {
+    BlockchainLMDB* lmdb = malloc(sizeof(BlockchainLMDB));
+    lmdb->db = malloc(sizeof(BlockchainDB));
+    lmdb_open(lmdb, "/Users/line/.bitmonero/lmdb", DBF_SAFE);
+}
+
+void test_get_available_space() {
+    printf("spacesize: %ld", get_available_space("/Users/line/workspace/cryptocurrency/monero"));
+}
 
 int main(int argc,char * argv[])
 {
     // test_lmdb();
-   printf("spacesize: %ld", GetAvailableSpace("/Users/line/workspace/cryptocurrency/monero"));
+//   printf("spacesize: %ld", GetAvailableSpace("/Users/line/workspace/cryptocurrency/monero"));
+    lmdb_open_test();
+//    test_get_available_space();
+//    test_str1();
+//    test_file_exists();
+//    open_test();
     return 0;
 }
 

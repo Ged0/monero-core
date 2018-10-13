@@ -139,7 +139,7 @@ const char* lmdb_error(const char* error_string, int mdb_res) {
     return full_string;
 }
 
-inline void lmdb_db_open(MDB_txn* txn, const char* name, int flags, MDB_dbi *dbi, const char* error_string) {
+static inline void lmdb_db_open(MDB_txn* txn, const char* name, int flags, MDB_dbi *dbi, const char* error_string) {
     int res = mdb_dbi_open(txn, name, flags, dbi);
     if (res) {
         g_error("%s - you may want to start with --db-salvage", lmdb_error(error_string, res));
@@ -177,7 +177,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     strcat(block_data_file_path, CRYPTONOTE_BLOCKCHAINDATA_FILENAME);
     char block_lock_file_path[strlen(oldFiles) + strlen(CRYPTONOTE_BLOCKCHAINDATA_LOCK_FILENAME)];
     strcpy(block_lock_file_path, oldFiles);
-    strcpy(block_lock_file_path, CRYPTONOTE_BLOCKCHAINDATA_LOCK_FILENAME);
+    strcat(block_lock_file_path, CRYPTONOTE_BLOCKCHAINDATA_LOCK_FILENAME);
     if (is_file_exists(block_data_file_path) || is_file_exists(block_lock_file_path)) {
         g_error("Found existing LMDB files in %s", oldFiles);
         g_error("Move %s and/or %s to %s, or delete them, and then restart", block_data_file_path, block_lock_file_path, oldFiles);

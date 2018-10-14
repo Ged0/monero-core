@@ -254,8 +254,6 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     
     // get a read/write MDB_txn, depending on mdb_flags
     mdb_txn_safe txn_safe;
-    txn_safe.m_txn = NULL;
-
     int mdb_res = mdb_txn_begin(lmdb->m_env, NULL, txn_flags, &txn_safe.m_txn);
     if (mdb_res) {
         g_error("Failed to create a transaction for the db: %d", mdb_res);

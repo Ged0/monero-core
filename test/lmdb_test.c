@@ -16,7 +16,7 @@ void test_lmdb() {
     char sval[32];
     
     rc = mdb_env_create(&env);
-    rc = mdb_env_open(env, "./testdb", 0, 0664);
+    rc = mdb_env_open(env, "/Users/line/workspace/cryptocurrency/testdb", 0, 0664);
     rc = mdb_txn_begin(env, NULL, 0, &txn);
     rc = mdb_open(txn, NULL, 0, &dbi);
     
@@ -75,7 +75,7 @@ long GetAvailableSpace(const char* path)
 void lmdb_open_test() {
     BlockchainLMDB* lmdb = malloc(sizeof(BlockchainLMDB));
     lmdb->db = malloc(sizeof(BlockchainDB));
-    lmdb_open(lmdb, "/Users/line/.bitmonero/lmdb", DBF_SAFE);
+    lmdb_open(lmdb, "/Users/line/.bitmonero/lmdb", DBF_FAST);
 }
 
 void test_get_available_space() {
@@ -84,7 +84,7 @@ void test_get_available_space() {
 
 int main(int argc,char * argv[])
 {
-    // test_lmdb();
+//     test_lmdb();
 //   printf("spacesize: %ld", GetAvailableSpace("/Users/line/workspace/cryptocurrency/monero"));
     lmdb_open_test();
 //    test_get_available_space();

@@ -254,6 +254,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     
     // get a read/write MDB_txn, depending on mdb_flags
     mdb_txn_safe txn_safe;
+    txn_safe.m_txn = NULL;
     MDB_txn *txn = txn_safe.m_txn;
     int mdb_res = mdb_txn_begin(lmdb->m_env, NULL, txn_flags, &txn);
     if (mdb_res) {
@@ -262,50 +263,50 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     
     // open necessary databases, and set properties as needed
     // uses macros to avoid having to change things too many places
-    lmdb_db_open(txn, LMDB_BLOCKS, MDB_INTEGERKEY | MDB_CREATE, lmdb->m_blocks, "Failed to open db handle for m_blocks");
+    lmdb_db_open(txn, LMDB_BLOCKS, MDB_INTEGERKEY | MDB_CREATE, &lmdb->m_blocks, "Failed to open db handle for m_blocks");
     
-    lmdb_db_open(txn, LMDB_BLOCK_INFO, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, lmdb->m_block_info, "Failed to open db handle for m_block_info");
-    lmdb_db_open(txn, LMDB_BLOCK_HEIGHTS, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, lmdb->m_block_heights, "Failed to open db handle for m_block_heights");
+    lmdb_db_open(txn, LMDB_BLOCK_INFO, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, &lmdb->m_block_info, "Failed to open db handle for m_block_info");
+    lmdb_db_open(txn, LMDB_BLOCK_HEIGHTS, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, &lmdb->m_block_heights, "Failed to open db handle for m_block_heights");
     
-    lmdb_db_open(txn, LMDB_TXS, MDB_INTEGERKEY | MDB_CREATE, lmdb->m_txs, "Failed to open db handle for m_txs");
-    lmdb_db_open(txn, LMDB_TXS_PRUNED, MDB_INTEGERKEY | MDB_CREATE, lmdb->m_txs_pruned, "Failed to open db handle for m_txs_pruned");
-    lmdb_db_open(txn, LMDB_TXS_PRUNABLE, MDB_INTEGERKEY | MDB_CREATE, lmdb->m_txs_prunable, "Failed to open db handle for m_txs_prunable");
-    lmdb_db_open(txn, LMDB_TXS_PRUNABLE_HASH, MDB_INTEGERKEY | MDB_CREATE, lmdb->m_txs_prunable_hash, "Failed to open db handle for m_txs_prunable_hash");
-    lmdb_db_open(txn, LMDB_TX_INDICES, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, lmdb->m_tx_indices, "Failed to open db handle for m_tx_indices");
-    lmdb_db_open(txn, LMDB_TX_OUTPUTS, MDB_INTEGERKEY | MDB_CREATE, lmdb->m_tx_outputs, "Failed to open db handle for m_tx_outputs");
+    lmdb_db_open(txn, LMDB_TXS, MDB_INTEGERKEY | MDB_CREATE, &lmdb->m_txs, "Failed to open db handle for m_txs");
+    lmdb_db_open(txn, LMDB_TXS_PRUNED, MDB_INTEGERKEY | MDB_CREATE, &lmdb->m_txs_pruned, "Failed to open db handle for m_txs_pruned");
+    lmdb_db_open(txn, LMDB_TXS_PRUNABLE, MDB_INTEGERKEY | MDB_CREATE, &lmdb->m_txs_prunable, "Failed to open db handle for m_txs_prunable");
+    lmdb_db_open(txn, LMDB_TXS_PRUNABLE_HASH, MDB_INTEGERKEY | MDB_CREATE, &lmdb->m_txs_prunable_hash, "Failed to open db handle for m_txs_prunable_hash");
+    lmdb_db_open(txn, LMDB_TX_INDICES, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, &lmdb->m_tx_indices, "Failed to open db handle for m_tx_indices");
+    lmdb_db_open(txn, LMDB_TX_OUTPUTS, MDB_INTEGERKEY | MDB_CREATE, &lmdb->m_tx_outputs, "Failed to open db handle for m_tx_outputs");
     
-    lmdb_db_open(txn, LMDB_OUTPUT_TXS, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, lmdb->m_output_txs, "Failed to open db handle for m_output_txs");
-    lmdb_db_open(txn, LMDB_OUTPUT_AMOUNTS, MDB_INTEGERKEY | MDB_DUPSORT | MDB_DUPFIXED | MDB_CREATE, lmdb->m_output_amounts, "Failed to open db handle for m_output_amounts");
+    lmdb_db_open(txn, LMDB_OUTPUT_TXS, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, &lmdb->m_output_txs, "Failed to open db handle for m_output_txs");
+    lmdb_db_open(txn, LMDB_OUTPUT_AMOUNTS, MDB_INTEGERKEY | MDB_DUPSORT | MDB_DUPFIXED | MDB_CREATE, &lmdb->m_output_amounts, "Failed to open db handle for m_output_amounts");
     
-    lmdb_db_open(txn, LMDB_SPENT_KEYS, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, lmdb->m_spent_keys, "Failed to open db handle for m_spent_keys");
+    lmdb_db_open(txn, LMDB_SPENT_KEYS, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, &lmdb->m_spent_keys, "Failed to open db handle for m_spent_keys");
     
-    lmdb_db_open(txn, LMDB_TXPOOL_META, MDB_CREATE, lmdb->m_txpool_meta, "Failed to open db handle for m_txpool_meta");
-    lmdb_db_open(txn, LMDB_TXPOOL_BLOB, MDB_CREATE, lmdb->m_txpool_blob, "Failed to open db handle for m_txpool_blob");
+    lmdb_db_open(txn, LMDB_TXPOOL_META, MDB_CREATE, &lmdb->m_txpool_meta, "Failed to open db handle for m_txpool_meta");
+    lmdb_db_open(txn, LMDB_TXPOOL_BLOB, MDB_CREATE, &lmdb->m_txpool_blob, "Failed to open db handle for m_txpool_blob");
     
     // this subdb is dropped on sight, so it may not be present when we open the DB.
     // Since we use MDB_CREATE, we'll get an exception if we open read-only and it does not exist.
     // So we don't open for read-only, and also not drop below. It is not used elsewhere.
     if (!(mdb_flags & MDB_RDONLY)) {
-        lmdb_db_open(txn, LMDB_HF_STARTING_HEIGHTS, MDB_CREATE, lmdb->m_hf_starting_heights, "Failed to open db handle for m_hf_starting_heights");
+        lmdb_db_open(txn, LMDB_HF_STARTING_HEIGHTS, MDB_CREATE, &lmdb->m_hf_starting_heights, "Failed to open db handle for m_hf_starting_heights");
     }
     
-    lmdb_db_open(txn, LMDB_HF_VERSIONS, MDB_INTEGERKEY | MDB_CREATE, lmdb->m_hf_versions, "Failed to open db handle for m_hf_versions");
+    lmdb_db_open(txn, LMDB_HF_VERSIONS, MDB_INTEGERKEY | MDB_CREATE, &lmdb->m_hf_versions, "Failed to open db handle for m_hf_versions");
     
-    lmdb_db_open(txn, LMDB_PROPERTIES, MDB_CREATE, lmdb->m_properties, "Failed to open db handle for m_properties");
+    lmdb_db_open(txn, LMDB_PROPERTIES, MDB_CREATE, &lmdb->m_properties, "Failed to open db handle for m_properties");
     
-    mdb_set_dupsort(txn, *lmdb->m_spent_keys, compare_hash32);
-    mdb_set_dupsort(txn, *lmdb->m_block_heights, compare_hash32);
-    mdb_set_dupsort(txn, *lmdb->m_tx_indices, compare_hash32);
-    mdb_set_dupsort(txn, *lmdb->m_output_amounts, compare_uint64);
-    mdb_set_dupsort(txn, *lmdb->m_output_txs, compare_uint64);
-    mdb_set_dupsort(txn, *lmdb->m_block_info, compare_uint64);
+    mdb_set_dupsort(txn, lmdb->m_spent_keys, compare_hash32);
+    mdb_set_dupsort(txn, lmdb->m_block_heights, compare_hash32);
+    mdb_set_dupsort(txn, lmdb->m_tx_indices, compare_hash32);
+    mdb_set_dupsort(txn, lmdb->m_output_amounts, compare_uint64);
+    mdb_set_dupsort(txn, lmdb->m_output_txs, compare_uint64);
+    mdb_set_dupsort(txn, lmdb->m_block_info, compare_uint64);
     
-    mdb_set_compare(txn, *lmdb->m_txpool_meta, compare_hash32);
-    mdb_set_compare(txn, *lmdb->m_txpool_blob, compare_hash32);
-    mdb_set_compare(txn, *lmdb->m_properties, compare_string);
+    mdb_set_compare(txn, lmdb->m_txpool_meta, compare_hash32);
+    mdb_set_compare(txn, lmdb->m_txpool_blob, compare_hash32);
+    mdb_set_compare(txn, lmdb->m_properties, compare_string);
     
     if (!(mdb_flags & MDB_RDONLY)) {
-        result = mdb_drop(txn, *lmdb->m_hf_starting_heights, 1);
+        result = mdb_drop(txn, lmdb->m_hf_starting_heights, 1);
         if (result && result != MDB_NOTFOUND) {
             g_error("Failed to drop m_hf_starting_heights: %d", result);
         }
@@ -313,7 +314,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     
     // get and keep current height
     MDB_stat db_stats;
-    if ((result = mdb_stat(txn, *lmdb->m_blocks, &db_stats))) {
+    if ((result = mdb_stat(txn, lmdb->m_blocks, &db_stats))) {
         g_error("%s", lmdb_error("Failed to query m_blocks: ", result));
     }
     g_info("Setting m_height to: %zu", db_stats.ms_entries);
@@ -323,7 +324,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     
     MDB_val* k = mdb_val_from_char_array("version");
     MDB_val v;
-    int get_result = mdb_get(txn, *lmdb->m_properties, k, &v);
+    int get_result = mdb_get(txn, lmdb->m_properties, k, &v);
     if (get_result == MDB_SUCCESS) {
         const uint32_t db_version = *(const uint32_t*)v.mv_data;
         if (db_version > VERSION) {
@@ -362,7 +363,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
         if (m_height == 0) {
             MDB_val* k = mdb_val_from_char_array("version");
             MDB_val* v = mdb_val_from_uint32_t(VERSION);
-            int put_result = mdb_put(txn, *lmdb->m_properties, k, v, 0);
+            int put_result = mdb_put(txn, lmdb->m_properties, k, v, 0);
             if (put_result != MDB_SUCCESS) {
                 mdb_txn_safe_abort(&txn_safe);
                 mdb_env_close(lmdb->m_env);

@@ -137,29 +137,29 @@ typedef struct BlockchainLMDB {
   BlockchainDB* db;
   MDB_env* m_env;
 
-  MDB_dbi* m_blocks;
-  MDB_dbi* m_block_heights;
-  MDB_dbi* m_block_info;
+  MDB_dbi m_blocks;
+  MDB_dbi m_block_heights;
+  MDB_dbi m_block_info;
 
-  MDB_dbi* m_txs;
-  MDB_dbi* m_txs_pruned;
-  MDB_dbi* m_txs_prunable;
-  MDB_dbi* m_txs_prunable_hash;
-  MDB_dbi* m_tx_indices;
-  MDB_dbi* m_tx_outputs;
+  MDB_dbi m_txs;
+  MDB_dbi m_txs_pruned;
+  MDB_dbi m_txs_prunable;
+  MDB_dbi m_txs_prunable_hash;
+  MDB_dbi m_tx_indices;
+  MDB_dbi m_tx_outputs;
 
-  MDB_dbi* m_output_txs;
-  MDB_dbi* m_output_amounts;
+  MDB_dbi m_output_txs;
+  MDB_dbi m_output_amounts;
 
-  MDB_dbi* m_spent_keys;
+  MDB_dbi m_spent_keys;
 
-  MDB_dbi* m_txpool_meta;
-  MDB_dbi* m_txpool_blob;
+  MDB_dbi m_txpool_meta;
+  MDB_dbi m_txpool_blob;
 
-  MDB_dbi* m_hf_starting_heights;
-  MDB_dbi* m_hf_versions;
+  MDB_dbi m_hf_starting_heights;
+  MDB_dbi m_hf_versions;
 
-  MDB_dbi* m_properties;
+  MDB_dbi m_properties;
   //mutable uint64_t m_cum_size;
   uint64_t m_cum_size;	// used in batch size estimation
   //mutable unsigned int m_cum_count;

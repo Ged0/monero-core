@@ -433,6 +433,17 @@ int lmdb_safe_sync_mode(BlockchainLMDB* lmdb, const bool onoff) {
     return 0;
 }
 
+int lmdb_reset(BlockchainLMDB* lmdb) {
+    g_info("lmdb_reset");
+    if (!lmdb->db->m_open) {
+        return -1;
+    }
+    mdb_txn_safe txn;
+    //TODO
+//    int result = lmdb_txn_begin(lmdb->m_env, NULL, 0, &txn);
+    return 0;
+}
+
 int lmdb_batch_abort(BlockchainLMDB* lmdb) {
     g_debug("lmdb_batch_abort");
     if (!lmdb->m_batch_transactions) {

@@ -180,6 +180,10 @@ typedef struct BlockchainLMDB {
 
 } BlockchainLMDB;
 
+/*
+ * LMDB PUBLIC METHOD
+ *
+ */
 bool lmdb_is_read_only(BlockchainLMDB *lmdb);
 
 int lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags);
@@ -190,8 +194,14 @@ int lmdb_sync(BlockchainLMDB* lmdb);
 
 int lmdb_safe_sync_mode(BlockchainLMDB* lmdb, const bool onoff);
 
+int lmdb_reset(BlockchainLMDB* lmdb);
+
 int lmdb_batch_abort(BlockchainLMDB* lmdb);
 
+/*
+ * LMDB PRIVATE METHOD
+ *
+ */
 // threshold_size is used for batch transactions
 bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size);
 

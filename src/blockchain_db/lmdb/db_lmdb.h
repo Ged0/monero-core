@@ -180,12 +180,15 @@ typedef struct BlockchainLMDB {
 
 } BlockchainLMDB;
 
+bool lmdb_is_read_only(BlockchainLMDB *lmdb);
 
-void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags);
+int lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags);
 
 int lmdb_close(BlockchainLMDB *lmdb);
 
 int lmdb_sync(BlockchainLMDB* lmdb);
+
+int lmdb_safe_sync_mode(BlockchainLMDB* lmdb, const bool onoff);
 
 int lmdb_batch_abort(BlockchainLMDB* lmdb);
 

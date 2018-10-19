@@ -146,26 +146,26 @@ static inline void lmdb_db_open(MDB_txn* txn, const char* name, int flags, MDB_d
     }
 }
 
-void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
+int lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     int result;
     int mdb_flags = MDB_NORDAHEAD;
 
     if (lmdb != NULL && lmdb->db->m_open) {
         /* code */
-        g_error("Attempted to open db, but it's already open");
-        return;
+        g_info("Attempted to open db, but it's already open");
+        return -1;
     }
     
     struct stat sb;
     if (stat(filename, &sb) != 0) {
         if ((result = mkdir(filename, 0777))) {
-            g_error("Create file failed, filename: %s, result: %d", filename, result);
-            return;
+            g_info("Create file failed, filename: %s, result: %d", filename, result);
+            return -2;
         }
     }
     if (!S_ISDIR(sb.st_mode)) {
-        g_error("LMDB needs a directory path, but a file was passed");
-        return;
+        g_info("LMDB needs a directory path, but a file was passed");
+        return -3;
     }
     
     int index = (int)(strrchr(filename, '/') - filename);
@@ -179,9 +179,9 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     strcpy(block_lock_file_path, oldFiles);
     strcat(block_lock_file_path, CRYPTONOTE_BLOCKCHAINDATA_LOCK_FILENAME);
     if (is_file_exists(block_data_file_path) || is_file_exists(block_lock_file_path)) {
-        g_error("Found existing LMDB files in %s", oldFiles);
-        g_error("Move %s and/or %s to %s, or delete them, and then restart", block_data_file_path, block_lock_file_path, oldFiles);
-        return;
+        g_info("Found existing LMDB files in %s", oldFiles);
+        g_info("Move %s and/or %s to %s, or delete them, and then restart", block_data_file_path, block_lock_file_path, oldFiles);
+        return -4;
     }
     
     //TODO check is hdd.
@@ -196,21 +196,21 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     strncpy(lmdb->m_folder, filename, strlen(filename));
     
     if((result = mdb_env_create(&(lmdb->m_env)))) {
-        g_error("Failed to create lmdb environment: %d", result);
-        return;
+        g_info("Failed to create lmdb environment: %d", result);
+        return -5;
     }
     
     if ((result = mdb_env_set_maxdbs(lmdb->m_env, 20))) {
-        g_error("Failed to set max number of dbs: %d", result);
-        return;
+        g_info("Failed to set max number of dbs: %d", result);
+        return -6;
     }
     
     //TODO need to calculate from core of CPU
     int threads = 20;
     if (threads > 110
         && (result = mdb_env_set_maxreaders(lmdb->m_env, threads + 16))) {
-        g_error("Failed to set max number of readers: %d", result);
-        return;
+        g_info("Failed to set max number of readers: %d", result);
+        return -7;
     }
     
     size_t mapsize = DEFAULT_MAPSIZE;
@@ -225,8 +225,8 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
         mdb_flags |= MDB_PREVSNAPSHOT;
     
     if ((result = mdb_env_open(lmdb->m_env, filename, mdb_flags, 0644))) {
-        g_error("Failed to open lmdb environment: %d", result);
-        return;
+        g_info("Failed to open lmdb environment: %d", result);
+        return -8;
     }
     
     MDB_envinfo mei;
@@ -235,8 +235,8 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     
     if (cur_mapsize < mapsize) {
         if ((result = mdb_env_set_mapsize(lmdb->m_env, mapsize))) {
-            printf("Failed to set max memory map size: %d", result);
-            return;
+            g_info("Failed to set max memory map size: %d", result);
+            return -9;
         }
         mdb_env_info(lmdb->m_env, &mei);
         cur_mapsize = (double)mei.me_mapsize;
@@ -256,7 +256,8 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     mdb_txn_safe txn_safe;
     int mdb_res = mdb_txn_begin(lmdb->m_env, NULL, txn_flags, &txn_safe.m_txn);
     if (mdb_res) {
-        g_error("Failed to create a transaction for the db: %d", mdb_res);
+        g_info("Failed to create a transaction for the db: %d", mdb_res);
+        return -10;
     }
     MDB_txn *txn = txn_safe.m_txn;
     
@@ -307,14 +308,16 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     if (!(mdb_flags & MDB_RDONLY)) {
         result = mdb_drop(txn, lmdb->m_hf_starting_heights, 1);
         if (result && result != MDB_NOTFOUND) {
-            g_error("Failed to drop m_hf_starting_heights: %d", result);
+            g_info("Failed to drop m_hf_starting_heights: %d", result);
+            return -11;
         }
     }
     
     // get and keep current height
     MDB_stat db_stats;
     if ((result = mdb_stat(txn, lmdb->m_blocks, &db_stats))) {
-        g_error("%s", lmdb_error("Failed to query m_blocks: ", result));
+        g_info("%s", lmdb_error("Failed to query m_blocks: ", result));
+        return -12;
     }
     g_info("Setting m_height to: %zu", db_stats.ms_entries);
     uint64_t m_height = db_stats.ms_entries;
@@ -338,7 +341,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
             mdb_txn_safe_commit(&txn_safe, NULL);
             lmdb->db->m_open = true;
             lmdb_migrate(lmdb, 0);
-            return;
+            return 0;
         }
 #endif
     } else {
@@ -353,8 +356,8 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
         mdb_txn_safe_abort(&txn_safe);
         mdb_env_close(lmdb->m_env);
         lmdb->db->m_open = false;
-        g_error("Existing lmdb database is incompatible with this version.\nPlease delete the existing database and resync.");
-        return;
+        g_info("Existing lmdb database is incompatible with this version.\nPlease delete the existing database and resync.");
+        return -13;
     }
     
     if (!(mdb_flags & MDB_RDONLY)) {
@@ -368,7 +371,7 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
                 mdb_env_close(lmdb->m_env);
                 lmdb->db->m_open = false;
                 g_info("Failed to write version to database.");
-                return;
+                return -14;
             }
         }
     }
@@ -378,22 +381,89 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     
     lmdb->db->m_open = true;
     // from here, init should be finished
+    return 0;
+}
+
+bool lmdb_is_read_only(BlockchainLMDB *lmdb) {
+    unsigned int flags;
+    int result = mdb_env_get_flags(lmdb->m_env, &flags);
+    if (result) {
+        g_error("Error getting database environment info:  %d", result);
+    }
+    if (flags & MDB_RDONLY) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 int lmdb_close(BlockchainLMDB *lmdb) {
     if (lmdb->m_batch_active) {
         g_warning("close() first calling batch_abort() due to active batch transaction");
-    
+        lmdb_batch_abort(lmdb);
     }
+    lmdb_sync(lmdb);
+    //TODO
+//    m_tinfo.reset();
+    mdb_env_close(lmdb->m_env);
+    lmdb->db->m_open = false;
     return 0;
 }
 
 int lmdb_sync(BlockchainLMDB* lmdb) {
+    g_debug("lmdb_sync");
+    if (!lmdb->db->m_open) {
+        g_info("DB operation attempted on a not-open DB instance");
+        return -1;
+    }
+    if (lmdb_is_read_only(lmdb)) {
+        return 0;
+    }
+    int result = mdb_env_sync(lmdb->m_env, true);
+    if (result) {
+        g_info("Failed to sync database: %d", result);
+        return result;
+    }
+    return 0;
+}
+
+int lmdb_safe_sync_mode(BlockchainLMDB* lmdb, const bool onoff) {
+    g_info("switching safe mode %s", (onoff ? "on" : "off"));
+    mdb_env_set_flags(lmdb->m_env, MDB_NOSYNC|MDB_MAPASYNC, !onoff);
     return 0;
 }
 
 int lmdb_batch_abort(BlockchainLMDB* lmdb) {
-    
+    g_debug("lmdb_batch_abort");
+    if (!lmdb->m_batch_transactions) {
+        g_info("batch transactions not enabled");
+        return -1;
+    }
+    if (!lmdb->m_batch_active) {
+        g_info("batch transaction not in progress");
+        return -2;
+    }
+    if (!lmdb->m_write_batch_txn) {
+        g_info("batch transaction not in progress");
+        return -3;
+    }
+    //TODO
+//    if (m_writer != boost::this_thread::get_id())
+//        throw1(DB_ERROR("batch transaction owned by other thread"));
+    if (!lmdb->db->m_open) {
+        g_info("DB operation attempted on a not-open DB instance");
+        return -4;
+    }
+    // for destruction of batch transaction
+    lmdb->m_write_txn = NULL;
+    // explicitly call in case mdb_env_close() (BlockchainLMDB::close()) called before BlockchainLMDB destructor called.
+    mdb_txn_safe_abort(lmdb->m_write_txn);
+    free(lmdb->m_write_txn);
+    lmdb->m_write_batch_txn = NULL;
+    lmdb->m_batch_active = false;
+    memset(&(lmdb->m_wcursors), 0, sizeof(lmdb->m_wcursors));
+    g_info("batch transaction: aborted");
+    return 0;
 }
 
 bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size) {

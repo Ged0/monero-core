@@ -380,6 +380,22 @@ void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     // from here, init should be finished
 }
 
+int lmdb_close(BlockchainLMDB *lmdb) {
+    if (lmdb->m_batch_active) {
+        g_warning("close() first calling batch_abort() due to active batch transaction");
+    
+    }
+    return 0;
+}
+
+int lmdb_sync(BlockchainLMDB* lmdb) {
+    return 0;
+}
+
+int lmdb_batch_abort(BlockchainLMDB* lmdb) {
+    
+}
+
 bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size) {
 #if defined(ENABLE_AUTO_RESIZE)
     MDB_envinfo mei;

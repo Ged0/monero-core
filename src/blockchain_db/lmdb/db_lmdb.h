@@ -183,6 +183,12 @@ typedef struct BlockchainLMDB {
 
 void lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags);
 
+int lmdb_close(BlockchainLMDB *lmdb);
+
+int lmdb_sync(BlockchainLMDB* lmdb);
+
+int lmdb_batch_abort(BlockchainLMDB* lmdb);
+
 // threshold_size is used for batch transactions
 bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size);
 

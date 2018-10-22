@@ -189,9 +189,9 @@ static inline void lmdb_db_open(MDB_txn* txn, const char* name, int flags, MDB_d
 static inline int lmdb_do_drop(MDB_txn* txn, MDB_dbi dbi, int del, const char* error_string) {
     int res = mdb_drop(txn, dbi, del);
     if (res) {
-        g_error("%s --- %d", error_string, res);
+        g_error("%s", lmdb_error(error_string, res));
     }
-    return 0;
+    return res;
 }
 
 int lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
@@ -494,13 +494,28 @@ int lmdb_reset(BlockchainLMDB* lmdb) {
     if (result) {
         g_error("%s", lmdb_error("Failed to create a transaction for the db: ", result));
     }
-    result = mdb_drop(txn, lmdb->m_blocks, 0);
-    if(result) {
-        g_error("%s", lmdb_error("Failed to drop m_blocks: ", result));
+    result = lmdb_do_drop(txn, lmdb->m_blocks, 0, "Failed to drop m_blocks");
+    result = lmdb_do_drop(txn, lmdb->m_block_info, 0, "Failed to drop m_block_info");
+    result = lmdb_do_drop(txn, lmdb->m_block_heights, 0, "Failed to drop m_block_heights");
+    result = lmdb_do_drop(txn, lmdb->m_txs_pruned, 0, "Failed to drop m_txs_pruned");
+    result = lmdb_do_drop(txn, lmdb->m_txs_prunable, 0, "Failed to drop m_txs_prunable");
+    result = lmdb_do_drop(txn, lmdb->m_txs_prunable_hash, 0, "Failed to drop m_txs_prunable_hash");
+    result = lmdb_do_drop(txn, lmdb->m_tx_indices, 0, "Failed to drop m_tx_indices");
+    result = lmdb_do_drop(txn, lmdb->m_tx_outputs, 0, "Failed to drop m_tx_outputs");
+    result = lmdb_do_drop(txn, lmdb->m_output_txs, 0, "Failed to drop m_output_txs");
+    result = lmdb_do_drop(txn, lmdb->m_output_amounts, 0, "Failed to drop m_output_amounts");
+    result = lmdb_do_drop(txn, lmdb->m_spent_keys, 0, "Failed to drop m_spent_keys");
+    (void)mdb_drop(txn, lmdb->m_hf_starting_heights, 0); // this one is dropped in new code
+    result = lmdb_do_drop(txn, lmdb->m_hf_versions, 0, "Failed to drop m_hf_versions");
+    result = lmdb_do_drop(txn, lmdb->m_properties, 0, "Failed to drop m_properties");
+    
+    MDB_val* k = mdb_val_from_char_array("version");
+    MDB_val* v = mdb_val_from_uint32_t(VERSION);
+    result = mdb_put(txn, lmdb->m_properties, &k, &v, 0);
+    if (result) {
+        g_error("%s", lmdb_error("Failed to write version to database: ", result));
     }
-    
-    
-    
+    mdb_txn_safe_commit(&txn_safe, NULL);
     return 0;
 }
 

@@ -74,6 +74,46 @@ static void mdb_txn_safe_allow_new_txns() {
     //TODO
 }
 
+void lmdb_resized(MDB_env* env) {
+    mdb_txn_safe_prevent_new_txns();
+    g_info("LMDB map resize detected.");
+    MDB_envinfo mei;
+    
+    mdb_env_info(env, &mei);
+    uint64_t old = mei.me_mapsize;
+    
+    mdb_txn_safe_wait_no_active_txns();
+    
+    int result = mdb_env_set_mapsize(env, 0);
+    if (result) {
+        g_error("Failed to set new mapsize: %d", result);
+    }
+    
+    mdb_env_info(env, &mei);
+    uint64_t new_mapsize = mei.me_mapsize;
+    g_info("LMDB Mapsize increased. Old: %llu MiB, New: %llu MiB", old / (1024 * 1024), new_mapsize/(1024 * 1024));
+    
+    mdb_txn_safe_allow_new_txns();
+}
+
+static inline int lmdb_txn_begin(MDB_env *env, MDB_txn *parent, unsigned int flags, MDB_txn **txn) {
+    int res = mdb_txn_begin(env, parent, flags, txn);
+    if (res == MDB_MAP_RESIZED) {
+        lmdb_resized(env);
+        res = mdb_txn_begin(env, parent, flags, txn);
+    }
+    return res;
+}
+
+static inline int lmdb_txn_renew(MDB_txn *txn) {
+    int res = mdb_txn_renew(txn);
+    if (res == MDB_MAP_RESIZED) {
+        lmdb_resized(mdb_txn_env(txn));
+        res = mdb_txn_renew(txn);
+    }
+    return res;
+}
+
 /* DB schema:
  *
  * Table            Key          Data
@@ -144,6 +184,14 @@ static inline void lmdb_db_open(MDB_txn* txn, const char* name, int flags, MDB_d
     if (res) {
         g_error("%s - you may want to start with --db-salvage", lmdb_error(error_string, res));
     }
+}
+
+static inline int lmdb_do_drop(MDB_txn* txn, MDB_dbi dbi, int del, const char* error_string) {
+    int res = mdb_drop(txn, dbi, del);
+    if (res) {
+        g_error("%s --- %d", error_string, res);
+    }
+    return 0;
 }
 
 int lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
@@ -438,9 +486,21 @@ int lmdb_reset(BlockchainLMDB* lmdb) {
     if (!lmdb->db->m_open) {
         return -1;
     }
-    mdb_txn_safe txn;
-    //TODO
-//    int result = lmdb_txn_begin(lmdb->m_env, NULL, 0, &txn);
+    
+    mdb_txn_safe txn_safe;
+
+    int result = lmdb_txn_begin(lmdb->m_env, NULL, 0, &txn_safe.m_txn);
+    MDB_txn *txn = txn_safe.m_txn;
+    if (result) {
+        g_error("%s", lmdb_error("Failed to create a transaction for the db: ", result));
+    }
+    result = mdb_drop(txn, lmdb->m_blocks, 0);
+    if(result) {
+        g_error("%s", lmdb_error("Failed to drop m_blocks: ", result));
+    }
+    
+    
+    
     return 0;
 }
 

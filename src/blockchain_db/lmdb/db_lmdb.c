@@ -537,7 +537,8 @@ const GArray* get_filenames(BlockchainLMDB* lmdb) {
 }
 
 const char* get_db_name(BlockchainLMDB* lmdb) {
-    return NULL;
+    g_debug("BlockchainLMDB::%s", __func__);
+    return "lmdb";
 }
 
 int lmdb_batch_abort(BlockchainLMDB* lmdb) {

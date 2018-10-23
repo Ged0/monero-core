@@ -198,7 +198,7 @@ static inline int lmdb_do_drop(MDB_txn* txn, MDB_dbi dbi, int del, const char* e
 int lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     int result;
     int mdb_flags = MDB_NORDAHEAD;
-
+    
     if (lmdb != NULL && lmdb->db->m_open) {
         /* code */
         g_info("Attempted to open db, but it's already open");
@@ -234,13 +234,13 @@ int lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     }
     
     //TODO check is hdd.
-//    boost::optional<bool> is_hdd_result = tools::is_hdd(filename.c_str());
-//    if (is_hdd_result)
-//    {
-//        if (is_hdd_result.value())
-//            MCLOG_RED(el::Level::Warning, "global", "The blockchain is on a rotating drive: this will be very slow, use a SSD if possible");
-//    }
-
+    //    boost::optional<bool> is_hdd_result = tools::is_hdd(filename.c_str());
+    //    if (is_hdd_result)
+    //    {
+    //        if (is_hdd_result.value())
+    //            MCLOG_RED(el::Level::Warning, "global", "The blockchain is on a rotating drive: this will be very slow, use a SSD if possible");
+    //    }
+    
     lmdb->m_folder = malloc(strlen(filename) + 1);
     strncpy(lmdb->m_folder, filename, strlen(filename));
     
@@ -453,7 +453,7 @@ int lmdb_close(BlockchainLMDB *lmdb) {
     }
     lmdb_sync(lmdb);
     //TODO
-//    m_tinfo.reset();
+    //    m_tinfo.reset();
     mdb_env_close(lmdb->m_env);
     lmdb->db->m_open = false;
     return 0;
@@ -489,7 +489,7 @@ int lmdb_reset(BlockchainLMDB* lmdb) {
     }
     
     mdb_txn_safe txn_safe;
-
+    
     int result = lmdb_txn_begin(lmdb->m_env, NULL, 0, &txn_safe.m_txn);
     MDB_txn *txn = txn_safe.m_txn;
     if (result) {
@@ -583,8 +583,8 @@ int lmdb_batch_abort(BlockchainLMDB* lmdb) {
         return -3;
     }
     //TODO
-//    if (m_writer != boost::this_thread::get_id())
-//        throw1(DB_ERROR("batch transaction owned by other thread"));
+    //    if (m_writer != boost::this_thread::get_id())
+    //        throw1(DB_ERROR("batch transaction owned by other thread"));
     if (!lmdb->db->m_open) {
         g_info("DB operation attempted on a not-open DB instance");
         return -4;

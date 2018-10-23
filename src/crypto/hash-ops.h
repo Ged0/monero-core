@@ -1,0 +1,8 @@
+#ifndef MONERO_CRYPTO_HASH_OPS_H_
+#define MONERO_CRYPTO_HASH_OPS_H_
+enum {
+  HASH_SIZE = 32,
+  HASH_DATA_AREA = 136
+};
+
+#endif //MONERO_CRYPTO_HASH_OPS_H_

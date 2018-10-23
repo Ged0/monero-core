@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <string.h>
 #include "common/file_util.h"
 #include "db_lmdb.h"
 
 // Increase when the DB structure changes
 #define VERSION 3
+static GPrivate thread_info_key;
 
 MDB_val* mdb_val_from_char_array(char* val) {
     MDB_val *mdb_val = malloc(sizeof(MDB_val));
@@ -35,7 +37,6 @@ int compare_hash32(const MDB_val *a, const MDB_val *b) {
             continue;
         return va[n] < vb[n] ? -1 : 1;
     }
-    
     return 0;
 }
 
@@ -550,6 +551,23 @@ void lmdb_unlock(BlockchainLMDB* lmdb) {
     //TODO
 }
 
+//#define TXN_PREFIX_RDONLY() \
+//MDB_txn *m_txn; \
+//mdb_txn_cursors *m_cursors; \
+//mdb_txn_safe auto_txn; \
+//bool my_rtxn = block_rtxn_start(&m_txn, &m_cursors); \
+//if (my_rtxn) auto_txn.m_tinfo = m_tinfo.get(); \
+//else auto_txn.uncheck()
+
+bool lmdb_block_exists(BlockchainLMDB* lmdb, const hash* h, uint64_t *height) {
+    g_debug("BlockchainLMDB::%s", __func__);
+    if (!lmdb->db->m_open) {
+        g_info("db is not open!");
+        return false;
+    }
+    return false;
+}
+
 int lmdb_batch_abort(BlockchainLMDB* lmdb) {
     g_debug("lmdb_batch_abort");
     if (!lmdb->m_batch_transactions) {
@@ -582,6 +600,54 @@ int lmdb_batch_abort(BlockchainLMDB* lmdb) {
     g_info("batch transaction: aborted");
     return 0;
 }
+
+
+bool lmdb_block_rtxn_start(BlockchainLMDB* lmdb, MDB_txn **mtxn, mdb_txn_cursors **mcur) {
+    bool ret = false;
+    mdb_threadinfo *tinfo;
+    if (lmdb->m_write_txn && lmdb->m_writer == g_thread_self()) {
+        *mtxn = lmdb->m_write_txn->m_txn;
+        *mcur = (mdb_txn_cursors *)&lmdb->m_wcursors;
+        return ret;
+    }
+    /* Check for existing info and force reset if env doesn't match -
+     * only happens if env was opened/closed multiple times in same process
+     */
+    tinfo = g_private_get(&thread_info_key);
+    if (tinfo != NULL || mdb_txn_env(tinfo->m_ti_rtxn) != lmdb->m_env) {
+        tinfo = malloc(sizeof(mdb_threadinfo));
+        //maybe memory leak.
+        g_private_replace(&thread_info_key, tinfo);
+        memset(&tinfo->m_ti_rcursors, 0, sizeof(tinfo->m_ti_rcursors));
+        memset(&tinfo->m_ti_rflags, 0, sizeof(tinfo->m_ti_rflags));
+        int mdb_res = lmdb_txn_begin(lmdb->m_env, NULL, MDB_RDONLY, &tinfo->m_ti_rtxn);
+        if (mdb_res) {
+            g_warning("%s", lmdb_error("Failed to create a read transaction for the db: ", mdb_res));
+            return false;
+        }
+        return true;
+    } else if (!tinfo->m_ti_rflags.m_rf_txn) {
+        int mdb_res = lmdb_txn_renew(tinfo->m_ti_rtxn);
+        if (mdb_res) {
+            g_warning("%s", lmdb_error("Failed to create a read transaction for the db: ", mdb_res));
+            return false;
+        }
+        return true;
+    }
+    
+    if (ret) {
+        tinfo->m_ti_rflags.m_rf_txn = true;
+    }
+    *mtxn = tinfo->m_ti_rtxn;
+    *mcur = &tinfo->m_ti_rcursors;
+    return false;
+}
+
+
+/*
+ * LMDB PRIVATE METHOD
+ *
+ */
 
 bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size) {
 #if defined(ENABLE_AUTO_RESIZE)

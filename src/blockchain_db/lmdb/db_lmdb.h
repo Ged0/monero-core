@@ -7,6 +7,7 @@
 #include <glib.h>
 #include "blockchain_db/blockchain_db.h"
 #include "cryptonote_config.h"
+#include "crypto/hash.h"
 
 
 #define ENABLE_AUTO_RESIZE
@@ -168,7 +169,7 @@ typedef struct BlockchainLMDB {
   mdb_txn_safe* m_write_txn; // may point to either a short-lived txn or a batch txn
   mdb_txn_safe* m_write_batch_txn; // persist batch txn outside of BlockchainLMDB
   // boost::thread::id m_writer;
-  uint64_t m_writer;
+  GThread* m_writer;
 
   bool m_batch_transactions; // support for batch transactions
   bool m_batch_active; // whether batch transaction is in progress
@@ -204,7 +205,14 @@ bool lmdb_lock(BlockchainLMDB* lmdb);
 
 void lmdb_unlock(BlockchainLMDB* lmdb);
 
+bool lmdb_block_exists(BlockchainLMDB* lmdb, const hash* h, uint64_t *height);
+
 int lmdb_batch_abort(BlockchainLMDB* lmdb);
+
+
+
+bool lmdb_block_rtxn_start(BlockchainLMDB* lmdb, MDB_txn **mtxn, mdb_txn_cursors **mcur);
+
 /*
  * LMDB PRIVATE METHOD
  *

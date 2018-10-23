@@ -511,12 +511,33 @@ int lmdb_reset(BlockchainLMDB* lmdb) {
     
     MDB_val* k = mdb_val_from_char_array("version");
     MDB_val* v = mdb_val_from_uint32_t(VERSION);
-    result = mdb_put(txn, lmdb->m_properties, &k, &v, 0);
+    result = mdb_put(txn, lmdb->m_properties, k, v, 0);
     if (result) {
         g_error("%s", lmdb_error("Failed to write version to database: ", result));
     }
     mdb_txn_safe_commit(&txn_safe, NULL);
     return 0;
+}
+
+const GArray* get_filenames(BlockchainLMDB* lmdb) {
+    g_debug("BlockchainLMDB::%s", __func__);
+    GArray* array = g_array_new(FALSE, FALSE, sizeof(char*));
+    
+    char block_data_file_path[strlen(lmdb->m_folder) + strlen(CRYPTONOTE_BLOCKCHAINDATA_FILENAME)];
+    strcpy(block_data_file_path, lmdb->m_folder);
+    strcat(block_data_file_path, CRYPTONOTE_BLOCKCHAINDATA_FILENAME);
+    g_array_append_val(array, block_data_file_path);
+    
+    char block_lock_file_path[strlen(lmdb->m_folder) + strlen(CRYPTONOTE_BLOCKCHAINDATA_LOCK_FILENAME)];
+    strcpy(block_lock_file_path, lmdb->m_folder);
+    strcat(block_lock_file_path, CRYPTONOTE_BLOCKCHAINDATA_LOCK_FILENAME);
+    g_array_append_val(array, block_lock_file_path);
+    
+    return array;
+}
+
+const char* get_db_name(BlockchainLMDB* lmdb) {
+    return NULL;
 }
 
 int lmdb_batch_abort(BlockchainLMDB* lmdb) {

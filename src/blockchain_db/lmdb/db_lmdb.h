@@ -196,8 +196,11 @@ int lmdb_safe_sync_mode(BlockchainLMDB* lmdb, const bool onoff);
 
 int lmdb_reset(BlockchainLMDB* lmdb);
 
-int lmdb_batch_abort(BlockchainLMDB* lmdb);
+const GArray* get_filenames(BlockchainLMDB* lmdb);
 
+const char* get_db_name(BlockchainLMDB* lmdb);
+
+int lmdb_batch_abort(BlockchainLMDB* lmdb);
 /*
  * LMDB PRIVATE METHOD
  *

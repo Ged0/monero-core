@@ -196,9 +196,13 @@ int lmdb_safe_sync_mode(BlockchainLMDB* lmdb, const bool onoff);
 
 int lmdb_reset(BlockchainLMDB* lmdb);
 
-const GArray* get_filenames(BlockchainLMDB* lmdb);
+const GArray* lmdb_get_filenames(BlockchainLMDB* lmdb);
 
-const char* get_db_name(BlockchainLMDB* lmdb);
+const char* lmdb_get_db_name(BlockchainLMDB* lmdb);
+
+bool lmdb_lock(BlockchainLMDB* lmdb);
+
+void lmdb_unlock(BlockchainLMDB* lmdb);
 
 int lmdb_batch_abort(BlockchainLMDB* lmdb);
 /*

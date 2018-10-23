@@ -519,7 +519,7 @@ int lmdb_reset(BlockchainLMDB* lmdb) {
     return 0;
 }
 
-const GArray* get_filenames(BlockchainLMDB* lmdb) {
+const GArray* lmdb_get_filenames(BlockchainLMDB* lmdb) {
     g_debug("BlockchainLMDB::%s", __func__);
     GArray* array = g_array_new(FALSE, FALSE, sizeof(char*));
     
@@ -536,9 +536,18 @@ const GArray* get_filenames(BlockchainLMDB* lmdb) {
     return array;
 }
 
-const char* get_db_name(BlockchainLMDB* lmdb) {
+const char* lmdb_get_db_name(BlockchainLMDB* lmdb) {
     g_debug("BlockchainLMDB::%s", __func__);
     return "lmdb";
+}
+
+bool lmdb_lock(BlockchainLMDB* lmdb) {
+    //TODO
+    return false;
+}
+
+void lmdb_unlock(BlockchainLMDB* lmdb) {
+    //TODO
 }
 
 int lmdb_batch_abort(BlockchainLMDB* lmdb) {

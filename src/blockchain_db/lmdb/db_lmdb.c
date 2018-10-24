@@ -195,6 +195,25 @@ static inline int lmdb_do_drop(MDB_txn* txn, MDB_dbi dbi, int del, const char* e
     return res;
 }
 
+#define RCURSOR(lmdb, name) \
+if (!m_cur_ ## name) { \
+int result = mdb_cursor_open(m_txn, lmdb->m_ ## name, (MDB_cursor **)&m_cur_ ## name); \
+if (result) \
+g_error("%s", lmdb_error("Failed to open cursor: ", result)); \
+if (m_cursors != &lmdb->m_wcursors) \
+lmdb->m_tinfo->m_ti_rflags.m_rf_ ## name = true; \
+} else if (m_cursors != &lmdb->m_wcursors && !lmdb->m_tinfo->m_ti_rflags.m_rf_ ## name) { \
+int result = mdb_cursor_renew(m_txn, m_cur_ ## name); \
+if (result) \
+g_error("%s", lmdb_error("Failed to renew cursor: ", result)); \
+lmdb->m_tinfo->m_ti_rflags.m_rf_ ## name = true; \
+}
+
+void mdb_txn_safe_uncheck(mdb_txn_safe* txn) {
+    g_atomic_int_dec_and_test(&mdb_txn_safe_num_active_txns);
+    txn->m_check = false;
+}
+
 int lmdb_open(BlockchainLMDB *lmdb, const char* filename, const int db_flags) {
     int result;
     int mdb_flags = MDB_NORDAHEAD;
@@ -551,13 +570,13 @@ void lmdb_unlock(BlockchainLMDB* lmdb) {
     //TODO
 }
 
-//#define TXN_PREFIX_RDONLY() \
-//MDB_txn *m_txn; \
-//mdb_txn_cursors *m_cursors; \
-//mdb_txn_safe auto_txn; \
-//bool my_rtxn = block_rtxn_start(&m_txn, &m_cursors); \
-//if (my_rtxn) auto_txn.m_tinfo = m_tinfo.get(); \
-//else auto_txn.uncheck()
+#define TXN_PREFIX_RDONLY(lmdb) \
+MDB_txn *m_txn; \
+mdb_txn_cursors *m_cursors; \
+mdb_txn_safe auto_txn; \
+bool my_rtxn = lmdb_block_rtxn_start(lmdb, &m_txn, &m_cursors); \
+if (my_rtxn) auto_txn.m_tinfo = g_private_get(&thread_info_key); \
+else mdb_txn_safe_uncheck(&auto_txn);
 
 bool lmdb_block_exists(BlockchainLMDB* lmdb, const hash* h, uint64_t *height) {
     g_debug("BlockchainLMDB::%s", __func__);
@@ -565,6 +584,9 @@ bool lmdb_block_exists(BlockchainLMDB* lmdb, const hash* h, uint64_t *height) {
         g_info("db is not open!");
         return false;
     }
+    TXN_PREFIX_RDONLY(lmdb);
+    RCURSOR(lmdb, block_heights);
+    
     return false;
 }
 
@@ -652,11 +674,9 @@ bool lmdb_block_rtxn_start(BlockchainLMDB* lmdb, MDB_txn **mtxn, mdb_txn_cursors
 bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size) {
 #if defined(ENABLE_AUTO_RESIZE)
     MDB_envinfo mei;
-    
     mdb_env_info(lmdb->m_env, &mei);
     
     MDB_stat mst;
-    
     mdb_env_stat(lmdb->m_env, &mst);
     
     // size_used doesn't include data yet to be committed, which can be
@@ -702,11 +722,9 @@ void lmdb_do_resize(BlockchainLMDB *lmdb, uint64_t increase_size) {
     }
     
     MDB_envinfo mei;
-    
     mdb_env_info(lmdb->m_env, &mei);
     
     MDB_stat mst;
-    
     mdb_env_stat(lmdb->m_env, &mst);
     
     // add 1Gb per resize, instead of doing a percentage increase

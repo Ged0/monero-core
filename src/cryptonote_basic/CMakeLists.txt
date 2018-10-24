@@ -1,9 +1,12 @@
-set(cryptonote_basic_sources)
+set(cryptonote_basic_sources
+	difficulty.c
+	)
 
 set(cryptonote_basic_headers)
 
 set(cryptonote_basic_private_headers
-  cryptonote_basic.h)
+  cryptonote_basic.h
+  difficulty.h)
 
 monero_private_headers(cryptonote_basic
   ${cryptonote_basic_private_headers})

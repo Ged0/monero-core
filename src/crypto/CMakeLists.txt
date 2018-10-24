@@ -5,6 +5,7 @@ set(crypto_sources
 set(crypto_headers)
 
 set(crypto_private_headers
+	crypto.h
 	hash-ops.h
   	hash.h
 	)

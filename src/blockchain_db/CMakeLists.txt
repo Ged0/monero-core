@@ -33,6 +33,7 @@ monero_add_library(blockchain_db
 target_link_libraries(blockchain_db
 	PUBLIC
 	common
+    cryptonote_basic
     ${LMDB_LIBRARY}
 	)
 

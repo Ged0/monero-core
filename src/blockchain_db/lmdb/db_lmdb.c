@@ -4,10 +4,23 @@
 #include <string.h>
 #include "common/file_util.h"
 #include "db_lmdb.h"
+#include "cryptonote_basic/difficulty.h"
 
 // Increase when the DB structure changes
 #define VERSION 3
 static GPrivate thread_info_key;
+
+#pragma pack(push, 1)
+// This MUST be identical to output_data_t, without the extra rct data at the end
+typedef struct pre_rct_output_data_t
+{
+    public_key pubkey;       //!< the output's public key (for spend verification)
+    uint64_t           unlock_time;  //!< the output's unlock time (or height)
+    uint64_t           height;       //!< the height of the block which created the output
+} pre_rct_output_data_t;
+#pragma pack(pop)
+
+#define MDB_val_set(var, val)   MDB_val var = {sizeof(val), (void *)&val}
 
 MDB_val* mdb_val_from_char_array(char* val) {
     MDB_val *mdb_val = malloc(sizeof(MDB_val));
@@ -208,6 +221,55 @@ if (result) \
 g_error("%s", lmdb_error("Failed to renew cursor: ", result)); \
 lmdb->m_tinfo->m_ti_rflags.m_rf_ ## name = true; \
 }
+
+typedef struct mdb_block_info_old
+{
+    uint64_t bi_height;
+    uint64_t bi_timestamp;
+    uint64_t bi_coins;
+    uint64_t bi_weight; // a size_t really but we need 32-bit compat
+    difficulty_type bi_diff;
+    hash bi_hash;
+} mdb_block_info_old;
+
+typedef struct mdb_block_info
+{
+    uint64_t bi_height;
+    uint64_t bi_timestamp;
+    uint64_t bi_coins;
+    uint64_t bi_weight; // a size_t really but we need 32-bit compat
+    difficulty_type bi_diff;
+    hash bi_hash;
+    uint64_t bi_cum_rct;
+} mdb_block_info;
+
+typedef struct blk_height {
+    hash bh_hash;
+    uint64_t bh_height;
+} blk_height;
+
+typedef struct txindex {
+    hash key;
+    tx_data_t data;
+} txindex;
+
+typedef struct pre_rct_outkey {
+    uint64_t amount_index;
+    uint64_t output_id;
+    pre_rct_output_data_t data;
+} pre_rct_outkey;
+
+typedef struct outkey {
+    uint64_t amount_index;
+    uint64_t output_id;
+    output_data_t data;
+} outkey;
+
+typedef struct outtx {
+    uint64_t output_id;
+    hash tx_hash;
+    uint64_t local_index;
+} outtx;
 
 void mdb_txn_safe_uncheck(mdb_txn_safe* txn) {
     g_atomic_int_dec_and_test(&mdb_txn_safe_num_active_txns);
@@ -578,6 +640,8 @@ bool my_rtxn = lmdb_block_rtxn_start(lmdb, &m_txn, &m_cursors); \
 if (my_rtxn) auto_txn.m_tinfo = g_private_get(&thread_info_key); \
 else mdb_txn_safe_uncheck(&auto_txn);
 
+#define TXN_POSTFIX_RDONLY()
+
 bool lmdb_block_exists(BlockchainLMDB* lmdb, const hash* h, uint64_t *height) {
     g_debug("BlockchainLMDB::%s", __func__);
     if (!lmdb->db->m_open) {
@@ -587,7 +651,24 @@ bool lmdb_block_exists(BlockchainLMDB* lmdb, const hash* h, uint64_t *height) {
     TXN_PREFIX_RDONLY(lmdb);
     RCURSOR(lmdb, block_heights);
     
-    return false;
+    bool ret = false;
+    MDB_val_set(key, h);
+    int get_result = mdb_cursor_get(m_cur_block_heights, (MDB_val *)&zerokval, &key, MDB_GET_BOTH);
+    if (get_result == MDB_NOTFOUND) {
+        g_info("Block with hash %s not found in db.", h->data);
+        return false;
+    } else if (get_result) {
+        g_warning("%s",  lmdb_error("DB error attempting to fetch block index from hash", get_result));
+        return -2;
+    } else {
+        if (height) {
+            const blk_height *bhp = (const blk_height *)key.mv_data;
+            *height = bhp->bh_height;
+        }
+        ret = true;
+    }
+    TXN_POSTFIX_RDONLY();
+    return ret;
 }
 
 int lmdb_batch_abort(BlockchainLMDB* lmdb) {

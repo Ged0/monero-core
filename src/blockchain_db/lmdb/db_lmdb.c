@@ -694,6 +694,12 @@ int lmdb_get_block_height(BlockchainLMDB* lmdb, const hash* h, uint64_t* height)
     return 0;
 }
 
+int get_block_header(const hash h, block_header* header) {
+    //TODO
+    
+    return 0;
+}
+
 
 int lmdb_batch_abort(BlockchainLMDB* lmdb) {
     g_debug("lmdb_batch_abort");

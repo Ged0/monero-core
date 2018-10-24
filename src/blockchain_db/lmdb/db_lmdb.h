@@ -8,6 +8,7 @@
 #include "blockchain_db/blockchain_db.h"
 #include "cryptonote_config.h"
 #include "crypto/hash.h"
+#include "cryptonote_basic/cryptonote_basic.h"
 
 
 #define ENABLE_AUTO_RESIZE
@@ -208,6 +209,8 @@ void lmdb_unlock(BlockchainLMDB* lmdb);
 bool lmdb_block_exists(BlockchainLMDB* lmdb, const hash* h, uint64_t *height);
 
 int lmdb_get_block_height(BlockchainLMDB* lmdb, const hash* h, uint64_t* height);
+
+int get_block_header(const hash h, block_header* header);
 
 int lmdb_batch_abort(BlockchainLMDB* lmdb);
 

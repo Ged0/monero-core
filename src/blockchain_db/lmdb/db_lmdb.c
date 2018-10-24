@@ -671,6 +671,30 @@ bool lmdb_block_exists(BlockchainLMDB* lmdb, const hash* h, uint64_t *height) {
     return ret;
 }
 
+int lmdb_get_block_height(BlockchainLMDB* lmdb, const hash* h, uint64_t* height) {
+    g_debug("BlockchainLMDB::%s", __func__);
+    if (!lmdb->db->m_open) {
+        g_info("db is not open!");
+        return -1;
+    }
+    TXN_PREFIX_RDONLY(lmdb);
+    RCURSOR(lmdb, block_heights);
+    
+    MDB_val_set(key, h);
+    int get_result = mdb_cursor_get(m_cur_block_heights, (MDB_val *)&zerokval, &key, MDB_GET_BOTH);
+    if (get_result == MDB_NOTFOUND) {
+        g_info("Attempted to retrieve non-existent block height. hash: %s", h->data);
+        return -2;
+    } else if (get_result) {
+        g_info("Error attempting to retrieve a block height from the db, hash: %s", h->data);
+        return -3;
+    }
+    blk_height *bhp = (blk_height *)key.mv_data;
+    *height = bhp->bh_height;
+    return 0;
+}
+
+
 int lmdb_batch_abort(BlockchainLMDB* lmdb) {
     g_debug("lmdb_batch_abort");
     if (!lmdb->m_batch_transactions) {

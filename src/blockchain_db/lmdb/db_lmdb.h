@@ -207,9 +207,9 @@ void lmdb_unlock(BlockchainLMDB* lmdb);
 
 bool lmdb_block_exists(BlockchainLMDB* lmdb, const hash* h, uint64_t *height);
 
+int lmdb_get_block_height(BlockchainLMDB* lmdb, const hash* h, uint64_t* height);
+
 int lmdb_batch_abort(BlockchainLMDB* lmdb);
-
-
 
 bool lmdb_block_rtxn_start(BlockchainLMDB* lmdb, MDB_txn **mtxn, mdb_txn_cursors **mcur);
 

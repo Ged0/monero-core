@@ -209,8 +209,10 @@ void lmdb_unlock(BlockchainLMDB* lmdb);
 bool lmdb_block_exists(BlockchainLMDB* lmdb, const hash* h, uint64_t *height);
 
 int lmdb_get_block_height(BlockchainLMDB* lmdb, const hash* h, uint64_t* height);
+//TODO
+int lmdb_get_block(BlockchainLMDB* lmdb, const hash* h);
 
-int get_block_header(const hash h, block_header* header);
+int lmdb_get_block_header(BlockchainLMDB* lmdb, const hash* h, block_header* header);
 
 int lmdb_batch_abort(BlockchainLMDB* lmdb);
 
@@ -221,6 +223,9 @@ bool lmdb_block_rtxn_start(BlockchainLMDB* lmdb, MDB_txn **mtxn, mdb_txn_cursors
  *
  */
 // threshold_size is used for batch transactions
+
+bool lmdb_check_open(BlockchainLMDB* lmdb);
+
 bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size);
 
 void lmdb_do_resize(BlockchainLMDB *lmdb, uint64_t increase_size);

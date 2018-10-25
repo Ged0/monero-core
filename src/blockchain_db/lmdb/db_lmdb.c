@@ -694,7 +694,19 @@ int lmdb_get_block_height(BlockchainLMDB* lmdb, const hash* h, uint64_t* height)
     return 0;
 }
 
-int get_block_header(const hash h, block_header* header) {
+int lmdb_get_block(BlockchainLMDB* lmdb, const hash* h) {
+    if (!lmdb_check_open(lmdb)) {
+        g_info("lmdb not open!");
+        return -1;
+    }
+    
+}
+
+int lmdb_get_block_header(BlockchainLMDB* lmdb, const hash* h, block_header* header) {
+    if (!lmdb_check_open(lmdb)) {
+        g_info("lmdb not open!");
+        return -1;
+    }
     //TODO
     
     return 0;
@@ -781,6 +793,10 @@ bool lmdb_block_rtxn_start(BlockchainLMDB* lmdb, MDB_txn **mtxn, mdb_txn_cursors
  * LMDB PRIVATE METHOD
  *
  */
+
+bool lmdb_check_open(BlockchainLMDB* lmdb) {
+    return lmdb->db->m_open;
+}
 
 bool lmdb_need_resize(BlockchainLMDB *lmdb, uint64_t threshold_size) {
 #if defined(ENABLE_AUTO_RESIZE)

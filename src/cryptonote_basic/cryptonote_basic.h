@@ -102,7 +102,8 @@ typedef struct transaction {
     hash hash;
     size_t blob_size;
     
-    //std::vector<std::vector<crypto::signature> > signatures
+    //crpto.h signature
+    //std::vector<std::vector<crypto::signature> > signatures; //count signatures  always the same as inputs count
     GArray* signatures;
     
     bool hash_valid;
@@ -110,7 +111,6 @@ typedef struct transaction {
     //    mutable std::atomic<bool> hash_valid;
     //    mutable std::atomic<bool> blob_size_valid;
     
-    //    std::vector<std::vector<crypto::signature> > signatures; //count signatures  always the same as inputs count
     //    rct::rctSig rct_signatures;
     
 } transaction;
